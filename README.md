@@ -19,8 +19,7 @@ $ make push
 ### Deploy controller
 ```shell
 $ export IMAGE=test/sample-controller:latest
-$ make build
-$ make push
+$ make deploy
 $ kubectl get pods
 NAME                                 READY   STATUS    RESTARTS   AGE
 sample-controller-59596f96b6-4tf7g   1/1     Running   0          13s
