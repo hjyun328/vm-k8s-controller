@@ -1,4 +1,4 @@
-package internal
+package webhook
 
 import (
 	"encoding/json"

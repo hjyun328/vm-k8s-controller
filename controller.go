@@ -117,10 +117,9 @@ func NewController(
 	klog.Info("Setting up event handlers")
 	// Set up an event handler for when VM resources change
 	vmInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: controller.enqueueVM,
-		UpdateFunc: func(old, new interface{}) {
-			controller.enqueueVM(new)
-		},
+		AddFunc:    controller.enqueueVM,
+		UpdateFunc: controller.enqueueNewVM,
+		DeleteFunc: controller.enqueueVM,
 	})
 
 	return controller
@@ -249,7 +248,7 @@ func (c *Controller) syncHandler(key string) error {
 				return err
 			}
 		} else {
-			if err := c.doSync(vm); err != nil {
+			if err := c.doOnUpdated(vm); err != nil {
 				return err
 			}
 		}
@@ -293,7 +292,7 @@ func (c *Controller) doOnCreated(vm *v1alpha1.VM) error {
 	return nil
 }
 
-func (c *Controller) doSync(vm *v1alpha1.VM) error {
+func (c *Controller) doOnUpdated(vm *v1alpha1.VM) error {
 	// update cpu utilization from the vm status api.
 	getStatusVmRes, _, err := c.vmApi.GetStatus(vm.Status.VmId)
 	if err != nil {
@@ -338,4 +337,8 @@ func (c *Controller) enqueueVM(obj interface{}) {
 		return
 	}
 	c.workqueue.Add(key)
+}
+
+func (c *Controller) enqueueNewVM(old interface{}, new interface{}) {
+	c.enqueueVM(new)
 }

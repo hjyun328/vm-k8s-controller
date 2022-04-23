@@ -164,22 +164,22 @@ func DefaultVmApi(hostPort string, httpTimeout time.Duration) VmApi {
 	return &vmApi{hostPort: hostPort, httpTimeout: httpTimeout}
 }
 
-type NoopVmApi struct {
+type FakeVmApi struct {
 }
 
-func (n *NoopVmApi) Create(CreateVMRequest) (CreateVMResponse, int, error) {
+func (n *FakeVmApi) Create(CreateVMRequest) (CreateVMResponse, int, error) {
 	return CreateVMResponse{Id: string(uuid.NewUUID())}, http.StatusCreated, nil
 }
 
-func (n *NoopVmApi) GetStatus(uuid string) (GetStatusVMResponse, int, error) {
+func (n *FakeVmApi) GetStatus(uuid string) (GetStatusVMResponse, int, error) {
 	return GetStatusVMResponse{CpuUtilization: 50}, http.StatusOK, nil
 }
 
-func (n *NoopVmApi) Delete(uuid string) (int, error) {
+func (n *FakeVmApi) Delete(uuid string) (int, error) {
 	return http.StatusNoContent, nil
 }
 
-func (n *NoopVmApi) Check(name string) (int, error) {
+func (n *FakeVmApi) Check(name string) (int, error) {
 	if name == "error" {
 		return http.StatusBadRequest, errors.New(`"error" vmname is not allowed.`)
 	}

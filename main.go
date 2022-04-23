@@ -24,7 +24,7 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/sample-controller/internal"
+	"k8s.io/sample-controller/internal/webhook"
 
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -32,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
@@ -91,7 +90,7 @@ func main() {
 	leaderElectionLockName := utils.DefaultString(os.Getenv(envLeaderElectionLockName), defaultLeaderElectionLockName)
 
 	//vmApi := privatecloud.DefaultVmApi(defaultPrivateCloudApiHostPort, defaultPrivateCloudApiHttpTimeout)
-	vmApi := &privatecloud.NoopVmApi{}
+	vmApi := &privatecloud.FakeVmApi{}
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
@@ -129,8 +128,6 @@ func main() {
 		klog.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient,
-		time.Second*30, kubeinformers.WithNamespace(watchNamespace))
 	sampleInformerFactory := informers.NewSharedInformerFactoryWithOptions(sampleClient,
 		time.Second*30, informers.WithNamespace(watchNamespace))
 
@@ -138,9 +135,6 @@ func main() {
 		sampleInformerFactory.Samplecontroller().V1alpha1().VMs(),
 		vmApi)
 
-	// notice that there is no need to run Start methods in a separate goroutine. (i.e. go kubeInformerFactory.Start(stopCh)
-	// Start method is non-blocking and runs all registered informers in a dedicated goroutine.
-	kubeInformerFactory.Start(stopCh)
 	sampleInformerFactory.Start(stopCh)
 
 	if err = controller.Run(1, stopCh); err != nil {
@@ -151,7 +145,7 @@ func main() {
 func startVmValidatingWebhook(vmApi privatecloud.VmApi, port int, cert string, key string, stopCh <-chan struct{}) {
 	klog.Info("start validating webhook server.")
 	mux := http.NewServeMux()
-	mux.Handle("/", internal.NewVMValidatingWebHook(vmApi))
+	mux.Handle("/", webhook.NewVMValidatingWebHook(vmApi))
 	server := http.Server{Addr: fmt.Sprintf(":%d", port), Handler: mux}
 	go func() {
 		if err := server.ListenAndServeTLS(cert, key); err != nil {
@@ -166,10 +160,11 @@ func startVmValidatingWebhook(vmApi privatecloud.VmApi, port int, cert string, k
 
 func startExporter(port int, stopCh <-chan struct{}) {
 	klog.Info("start exporter.")
-	// expose go-client like workqueue, client stats.
-	// TODO: cannot expose reflector metrics:
+	// TODO: cannot expose reflector metrics
 	// https://github.com/kubernetes-sigs/controller-runtime/issues/817
 	// https://github.com/kubernetes/kubernetes/pull/74636
+
+	// expose go-client like workqueue, client stats.
 	metrics.Registry.MustRegister(
 		// expose Go runtime metrics like GC stats, memory stats etc.
 		collectors.NewGoCollector(),
