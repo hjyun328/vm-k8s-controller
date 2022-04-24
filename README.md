@@ -66,3 +66,14 @@ Resource: "samplecontroller.k8s.io/v1alpha1, Resource=vms", GroupVersionKind: "s
 Name: "vm", Namespace: "default"
 for: "vm_error.yaml": admission webhook "samplecontroller.k8s.io" denied the request: "error" vmname is not allowed.
 ```
+
+## Expose controller metrics
+```yaml
+# prometheus.yml
+ global:
+  scrape_interval: 15s
+    scrape_configs:
+      - job_name: "sample-controller"
+        static_configs:
+          - targets: ["localhost:8500"]
+```
