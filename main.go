@@ -153,7 +153,7 @@ func startVmValidatingWebhook(vmApi privatecloud.VmApi, port int, cert string, k
 		}
 	}()
 	<-stopCh
-	if err := server.Shutdown(context.Background()); err != nil {
+	if err := server.Shutdown(context.TODO()); err != nil {
 		klog.Fatal(err)
 	}
 }
@@ -182,7 +182,7 @@ func startExporter(port int, stopCh <-chan struct{}) {
 		}
 	}()
 	<-stopCh
-	if err := server.Shutdown(context.Background()); err != nil {
+	if err := server.Shutdown(context.TODO()); err != nil {
 		klog.Fatal(err)
 	}
 }
@@ -192,7 +192,7 @@ func startLeaderElection(podName string, podNamespace string, lockName string, c
 	klog.Info("wait for becoming leader.")
 	for {
 		configMap, err := client.CoreV1().ConfigMaps(podNamespace).Get(
-			context.Background(), lockName, metav1.GetOptions{})
+			context.TODO(), lockName, metav1.GetOptions{})
 		if err == nil {
 			for _, ownerReference := range configMap.OwnerReferences {
 				if ownerReference.Name == podName {
@@ -204,7 +204,7 @@ func startLeaderElection(podName string, podNamespace string, lockName string, c
 			klog.Error(err)
 		} else {
 			pod, err := client.CoreV1().Pods(podNamespace).Get(
-				context.Background(), podName, metav1.GetOptions{})
+				context.TODO(), podName, metav1.GetOptions{})
 			if err != nil {
 				klog.Error(err)
 			} else {
@@ -225,7 +225,7 @@ func startLeaderElection(podName string, podNamespace string, lockName string, c
 				}
 				klog.Info("try to acquire leader lock.")
 				if _, err := client.CoreV1().ConfigMaps(podNamespace).Create(
-					context.Background(), configMap, metav1.CreateOptions{}); err != nil {
+					context.TODO(), configMap, metav1.CreateOptions{}); err != nil {
 					if errors.IsAlreadyExists(err) {
 						klog.Info("someone has already acquired the leader lock.")
 					} else {
