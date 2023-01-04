@@ -195,7 +195,7 @@ func startLeaderElection(podName string, podNamespace string, lockName string, c
 			context.TODO(), lockName, metav1.GetOptions{})
 		if err == nil {
 			for _, ownerReference := range configMap.OwnerReferences {
-				if ownerReference.Name == podName {
+				if ownerReference.Name == podName { // FIXME: what if Kind of OwnerReference is not "Pod"?
 					klog.Info("this controller has been restarted just before, it already have the leader lock.")
 					return
 				}

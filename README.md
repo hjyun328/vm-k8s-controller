@@ -75,5 +75,5 @@ for: "vm_error.yaml": admission webhook "samplecontroller.k8s.io" denied the req
     scrape_configs:
       - job_name: "sample-controller"
         static_configs:
-          - targets: ["localhost:8500"]
+          - targets: ["sample-controller:8500"]
 ```

@@ -295,7 +295,7 @@ func (c *Controller) doOnCreated(vm *v1alpha1.VM) error {
 func (c *Controller) doOnUpdated(vm *v1alpha1.VM) error {
 	// update cpu utilization from the vm status api.
 	getStatusVmRes, _, err := c.vmApi.GetStatus(vm.Status.VmId)
-	if err != nil {
+	if err != nil { // FIXME: if err is 404 errors, should it need to call creation vm api of private cloud?
 		return err
 	}
 
